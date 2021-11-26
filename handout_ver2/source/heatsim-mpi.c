@@ -276,12 +276,12 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
         LOG_ERROR_MPI("Error Wait receive data : ", ret);
         goto fail_exit;
     }
-    LOG_ERROR("receive complete : %d\n", heatsim->rank);*/
+    LOG_ERROR("receive complete : %d\n", heatsim->rank);
 
-    /*if(ret != MPI_SUCCESS) {
-        goto fail_exit;
+    // if(ret != MPI_SUCCESS) {
+    //     goto fail_exit;
     
-    }
+    // }
     free(request);
     free(status);
 
