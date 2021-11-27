@@ -120,12 +120,10 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
      *       Utilisez `cart2d_get_grid` pour obtenir la `grid` à une coordonnée.
      */
 
-    MPI_Datatype ElementType = grid_size_struct();
-    MPI_Type_commit(&ElementType);
+    MPI_Datatype message_type = grid_size_struct();
+    MPI_Type_commit(&message_type);
 
-    unsigned int n_child_processes = 30;
-
-    MPI_Request request[n_child_processes];
+    MPI_Request request[heatsim->rank_count - 1];
     //request = (MPI_Request *)malloc(2 * (heatsim->rank_count - 1) * sizeof(MPI_Request));
 
     // MPI_Status status[15]; 
@@ -150,7 +148,7 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
 
         LOG_ERROR("Sending to rank: %d", i + 1);
 
-        ret = MPI_Isend(&dim_to_send, 1, ElementType, i + 1, 6, heatsim->communicator, &request[i]);
+        ret = MPI_Isend(&dim_to_send, 1, message_type, i + 1, 6, heatsim->communicator, &request[i]);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send struct : ", ret);
             goto fail_exit;
@@ -175,27 +173,7 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             goto fail_exit;
         }
 
-        //LOG_ERROR("Data: %f for rank %d\n", grid->data[0], i);
     }
-    //LOG_ERROR("waiting in send : %d\n", heatsim->rank);
-
-    //ret = MPI_Waitall(15, request[0], MPI_STATUSES_IGNORE);
-    //LOG_ERROR("Finished waiting in send : %d", heatsim->rank);
-    // if (ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error Wait send : ", ret);
-    //     goto fail_exit;
-    // }
-
-    //int ret = MPI_Isend(&dim_to_send, 1, ElementType, heatsim->rank, 3, heatsim->communicator, &request_size);
-    //ret = MPI_Isend(&grid->data, 1, MPI_DOUBLE, heatsim->rank, 3, heatsim->communicator, &request_data);
-    //
-    //if(ret != MPI_SUCCESS) {
-    //    goto fail_exit;
-    //}
-
-    //MPI_Wait(&request_data, MPI_STATUS_IGNORE);
-    // free(request);
-    // free(status);
 
     return 0;
 
@@ -233,6 +211,7 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     grid_t* newGrid = grid_create(buf.width,buf.height,buf.padding);
     
+    #warning Modifier directement??????
     newGrid->data = malloc(newGrid->width * newGrid->height * sizeof(double));
 
     // NOTE: Pas de & car newGrid->data est deja un pointeur
@@ -250,14 +229,6 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     LOG_ERROR("Data recue pour rank: %d", heatsim->rank);
 
-    // if(ret != MPI_SUCCESS) {
-    //     goto fail_exit;
-    
-    // }
-    // free(request);
-    // free(status);
-
-    
     return newGrid;
 
 
