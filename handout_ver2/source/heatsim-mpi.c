@@ -75,7 +75,7 @@ typedef struct dimensions {
     unsigned int width;
     unsigned int height;
     unsigned int padding;
-} e_t;
+} dim_t;
 
 typedef struct data {
     double* data;
@@ -83,27 +83,47 @@ typedef struct data {
 
 
 MPI_Datatype grid_size_struct() {
-    MPI_Datatype ElementType;
+    MPI_Datatype type;
 
-    MPI_Datatype ElementFieldTypes[3] =
+    MPI_Datatype field_types[3] =
     { 
         MPI_UNSIGNED,
         MPI_UNSIGNED,
         MPI_UNSIGNED
     };
 
-    MPI_Aint ElementFieldPosition[3] =
+    MPI_Aint field_positions[3] =
     { 
-        offsetof(e_t, width), 
-        offsetof(e_t, height), 
-        offsetof(e_t, padding)
+        offsetof(dim_t, width), 
+        offsetof(dim_t, height), 
+        offsetof(dim_t, padding)
     };
 
-    int ElementFieldLength[3] = {1, 1, 1};
-    MPI_Type_create_struct(3, ElementFieldLength, ElementFieldPosition, ElementFieldTypes, &ElementType);
-    
-    return ElementType;
+    int field_lengths[3] = {1, 1, 1};
 
+    MPI_Type_create_struct(3, field_lengths, field_positions, field_types, &type);
+    
+    return type;
+}
+
+MPI_Datatype grid_data_struct() {
+    MPI_Datatype type;
+
+    MPI_Datatype field_types[1] =
+    { 
+        MPI_DOUBLE
+    };
+
+    MPI_Aint field_positions[1] =
+    { 
+        offsetof(data_t, data)
+    };
+
+    int field_lengths[1] = { 1 };
+
+    MPI_Type_create_struct(1, field_lengths, field_positions, field_types, &type);
+    
+    return type;
 }
 
 int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
@@ -159,8 +179,14 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             goto fail_exit;
         }
 
+        MPI_Datatype data_type = grid_data_struct();
+        MPI_Type_commit(&data_type);
+
+        data_t* data = malloc(sizeof(struct data) + grid->width * grid->height * sizeof(double));
+        data->data = grid->data;
+
         // NOTE: Pas de & car grid->data est deja un pointeur
-        ret = MPI_Isend(grid->data, grid->width * grid->height, MPI_DOUBLE, i + 1, 6, heatsim->communicator, &request[i]);
+        ret = MPI_Isend(data, 1, data_type, i + 1, 6, heatsim->communicator, &request[i]);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send data : ", ret);
             goto fail_exit;
@@ -172,7 +198,7 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             LOG_ERROR_MPI("Error waiting : ", ret);
             goto fail_exit;
         }
-
+        LOG_ERROR("Sent data[0]: %f for rank: %d\n", data->data[0], i);
     }
 
     return 0;
@@ -194,7 +220,7 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
     MPI_Datatype message_type = grid_size_struct();
     MPI_Type_commit(&message_type);
 
-    e_t buf;
+    dim_t buf;
     int ret = 0;
 
     MPI_Request request;
@@ -211,11 +237,13 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     grid_t* newGrid = grid_create(buf.width,buf.height,buf.padding);
     
-    #warning Modifier directement??????
-    newGrid->data = malloc(newGrid->width * newGrid->height * sizeof(double));
+    MPI_Datatype data_type = grid_data_struct();
+    MPI_Type_commit(&data_type);
+
+    data_t* data = malloc(sizeof(struct data) + newGrid->width * newGrid->height * sizeof(double));
 
     // NOTE: Pas de & car newGrid->data est deja un pointeur
-    ret = MPI_Irecv(newGrid->data, newGrid->width * newGrid->height, MPI_DOUBLE, 0, 6, heatsim->communicator, &request);
+    ret = MPI_Irecv(data, 1, data_type, 0, 6, heatsim->communicator, &request);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error receive data : ", ret);
         goto fail_exit;
@@ -227,7 +255,8 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
         goto fail_exit;
     }
 
-    LOG_ERROR("Data recue pour rank: %d", heatsim->rank);
+    LOG_ERROR("Received for rank: %d\n", heatsim->rank);
+
 
     return newGrid;
 
