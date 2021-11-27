@@ -14,45 +14,49 @@ int heatsim_init(heatsim_t* heatsim, unsigned int dim_x, unsigned int dim_y) {
     int dimensions[2] = {dim_x, dim_y};
     int periods[2] = { true, true };
 
-    MPI_Comm_size(MPI_COMM_WORLD, &heatsim->rank_count);
-    MPI_Comm_rank(MPI_COMM_WORLD, &heatsim->rank);
+    int ret = 0;
 
-    int ret;
-
-    ret = MPI_Cart_create(MPI_COMM_WORLD, 2, dimensions, periods, false, &heatsim->communicator);
+    ret = MPI_Cart_create(MPI_COMM_WORLD, 2, dimensions, periods, true, &heatsim->communicator);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error Cart Create : ", ret);
 
         goto fail_exit;
     }
 
-    ret = MPI_Cart_shift(heatsim->communicator, 1, -1, &heatsim->rank, &heatsim->rank_north_peer);
+    if (heatsim->communicator == MPI_COMM_NULL) {
+        LOG_ERROR("NULL CONNECTOR: %d", heatsim->rank);
+    }
+
+    MPI_Comm_size(heatsim->communicator, &heatsim->rank_count);
+    MPI_Comm_rank(heatsim->communicator, &heatsim->rank);   
+
+    ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank_west_peer, &heatsim->rank_east_peer);
      if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Shift 1 : ", ret);
 
         goto fail_exit;
     }
 
-    ret = MPI_Cart_shift(heatsim->communicator, 1, 1, &heatsim->rank, &heatsim->rank_south_peer);
+    ret = MPI_Cart_shift(heatsim->communicator, 1, 1, &heatsim->rank_north_peer, &heatsim->rank_south_peer);
      if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Shift 2 : ", ret);
 
         goto fail_exit;
     }
 
-    ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank, &heatsim->rank_east_peer);
-     if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Shift 3 : ", ret);
+    // ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank, &heatsim->rank_east_peer);
+    //  if(ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Shift 3 : ", ret);
 
-        goto fail_exit;
-    }
+    //     goto fail_exit;
+    // }
 
-    ret = MPI_Cart_shift(heatsim->communicator, 0, -1, &heatsim->rank, &heatsim->rank_west_peer);
-     if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Shift 4 : ", ret);
+    // ret = MPI_Cart_shift(heatsim->communicator, 0, -1, &heatsim->rank, &heatsim->rank_west_peer);
+    //  if(ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Shift 4 : ", ret);
 
-        goto fail_exit;
-    }
+    //     goto fail_exit;
+    // }
 
     ret = MPI_Cart_coords(heatsim->communicator, heatsim->rank, 2, heatsim->coordinates);
      if(ret != MPI_SUCCESS) {
@@ -116,60 +120,33 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
      *       Utilisez `cart2d_get_grid` pour obtenir la `grid` à une coordonnée.
      */
 
-
-    /*MPI_Datatype ElementType;
-
-    MPI_Datatype ElementFieldTypes[3] =
-    { 
-        MPI_UNSIGNED,
-        MPI_UNSIGNED,
-        MPI_UNSIGNED
-    };
-
-    MPI_Aint ElementFieldPosition[3] =
-    { 
-        offsetof(e_t, width), 
-        offsetof(e_t, height), 
-        offsetof(e_t, padding)
-    };
-
-    int ElementFieldLength[3] = {1, 1, 1};
-    MPI_Type_create_struct(3, ElementFieldLength, ElementFieldPosition, ElementFieldTypes, &ElementType);*/
-    
-    
     MPI_Datatype ElementType = grid_size_struct();
     MPI_Type_commit(&ElementType);
 
+    MPI_Request request[15];
+    //request = (MPI_Request *)malloc(2 * (heatsim->rank_count - 1) * sizeof(MPI_Request));
 
-    /*grid_t* grid = cart2d_get_grid(cart, heatsim->coordinates[0], heatsim->coordinates[1]);
+    // MPI_Status status[15]; 
+    //status = (MPI_Status *)malloc(2 * (heatsim->rank_count - 1) * sizeof(MPI_Status));
 
-    struct dimensions dim_to_send = {
-        grid->width,
-        grid->height,
-        grid->padding
-    };*/
-    /*LOG_ERROR("value of dim_to_send width : %d\n", dim_to_send.width);
-    LOG_ERROR("value of dim_to_send height : %d\n", dim_to_send.height);
-    LOG_ERROR("value of dim_to_send padding : %d\n", dim_to_send.padding);*/
+        // ret = MPI_Isend(&dim_to_send, 1, ElementType, i, 0, heatsim->communicator, &request[i]);
+        // int buffer_sent[3] = { 111111, 222222, 333333 };
+        // MPI_Request request[3];
+        // for (unsigned int i = 0; i < 3; i++) {
+        //     printf("MPI process %d sends value %d.\n", heatsim->rank, buffer_sent[i]);
+        //     MPI_Isend(&buffer_sent[i], 1, MPI_INT, i + 1, 0, MPI_COMM_WORLD, &request[i]);
 
-    //MPI_Request request_size;
-    /*if(ret != MPI_SUCCESS) {
-        goto fail_exit;
-    }*/
-    //MPI_Wait(&request_size, MPI_STATUS_IGNORE);
-    /////////////////////////////////////////////////
-    //MPI_Request request_data;
+        //     // Do other things while the MPI_Isend completes
+        //     // <...>
 
+        //     // Let's wait for the MPI_Isend to complete before progressing further.
+        //     MPI_Wait(&request[i], MPI_STATUS_IGNORE);
+        // }
 
-    MPI_Request *request;
-    request = (MPI_Request *)malloc(2 * (heatsim->rank_count - 1) * sizeof(MPI_Request));
-
-    MPI_Status *status; 
-    status = (MPI_Status *)malloc(2 * (heatsim->rank_count - 1) * sizeof(MPI_Status));
-
+    int buf = 12345;
 
     int ret;
-    for (int i = 1; i < heatsim->rank_count; i++){
+    for (int i = 0; i < heatsim->rank_count - 1; i++) {
         ret = MPI_Cart_coords(heatsim->communicator, i, 2, heatsim->coordinates);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error in cart coords : ", ret);
@@ -182,32 +159,38 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             grid->height,
             grid->padding
         };
-        LOG_ERROR("value of dim_to_send width : %d    for rank   :   %d\n", dim_to_send.width,i);
-        LOG_ERROR("value of dim_to_send height : %d    for rank   :   %d\n", dim_to_send.height, i);
-        LOG_ERROR("value of dim_to_send padding : %d    for rank   :   %d\n", dim_to_send.padding,i);
 
+        LOG_ERROR("Sending to rank: %d", i + 1);
 
-
-        LOG_ERROR("sending ID : %d\n", i);
-        ret = MPI_Isend(&dim_to_send, 1, ElementType, i, i*2, heatsim->communicator, &request[(i - 1) * 2]);
+        ret = MPI_Isend(&buf, 1, MPI_INT, i + 1, 6, heatsim->communicator, &request[i]);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send struct : ", ret);
             goto fail_exit;
         }
-        ret = MPI_Isend(&grid->data, grid->width * grid->height, MPI_DOUBLE, i, i * 2 + 1, heatsim->communicator, &request[(i - 1) * 2 + 1]);
+
+        ret = MPI_Wait(&request[i], MPI_STATUS_IGNORE);
         if(ret != MPI_SUCCESS) {
-            LOG_ERROR_MPI("Error send data : ", ret);
+            LOG_ERROR_MPI("Error waiting : ", ret);
             goto fail_exit;
         }
-        LOG_ERROR("info sent  : %d\n", i);
-       
+        LOG_ERROR("Wait done: %d", i + 1);
+    //    LOG_ERROR("value of dim_to_send width : %d, height: %d, padding: %d for rank %d\n", dim_to_send.width, dim_to_send.height, dim_to_send.padding, i);
+
+    //     ret = MPI_Isend(&grid->data, grid->width * grid->height, MPI_DOUBLE, i, i * 2 + 1, heatsim->communicator, &request[i]);
+    //     if(ret != MPI_SUCCESS) {
+    //         LOG_ERROR_MPI("Error send data : ", ret);
+    //         goto fail_exit;
+    //     }
+    //     LOG_ERROR("Data: %f for rank %d\n", *(grid->data), i);
     }
-    LOG_ERROR("waiting in send : %d\n", heatsim->rank);
-    ret = MPI_Waitall(2 * (heatsim->rank_count - 1), request, status);
-    if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Error Wait send : ", ret);
-        goto fail_exit;
-    }
+    //LOG_ERROR("waiting in send : %d\n", heatsim->rank);
+
+    //ret = MPI_Waitall(15, request[0], MPI_STATUSES_IGNORE);
+    //LOG_ERROR("Finished waiting in send : %d", heatsim->rank);
+    // if (ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Error Wait send : ", ret);
+    //     goto fail_exit;
+    // }
 
     //int ret = MPI_Isend(&dim_to_send, 1, ElementType, heatsim->rank, 3, heatsim->communicator, &request_size);
     //ret = MPI_Isend(&grid->data, 1, MPI_DOUBLE, heatsim->rank, 3, heatsim->communicator, &request_data);
@@ -217,8 +200,8 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
     //}
 
     //MPI_Wait(&request_data, MPI_STATUS_IGNORE);
-    free(request);
-    free(status);
+    // free(request);
+    // free(status);
 
     return 0;
 
@@ -243,47 +226,62 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
     
     int ret;
 
-    MPI_Request *request;
-    request = (MPI_Request *)malloc(2 * sizeof(MPI_Request));
+    // MPI_Request *request;
+    // request = (MPI_Request *)malloc(2 * sizeof(MPI_Request));
 
-    MPI_Status *status; 
-    status = (MPI_Status *)malloc(2 * sizeof(MPI_Status));
+    //MPI_Request request;
+
+    // MPI_Status *status; 
+    // status = (MPI_Status *)malloc(2 * sizeof(MPI_Status));
+
+    int buff;
 
 
-    ret = MPI_Irecv(&buf, 1, ElementType, 0, heatsim->rank * 2, heatsim->communicator, &request[0]);
-    if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Error recieve struct : ", ret);
-        goto fail_exit;
-    }
-    LOG_ERROR("waiting in first receive : %d\n", heatsim->rank);
+    //ret = MPI_Irecv(&buff, 1, MPI_INT, 0, 0, heatsim->communicator, &request);
+    // MPI_Status status;
+    // ret = MPI_Irecv(&buff, 1, MPI_INT, 0, 6, heatsim->communicator, &request);
+    // LOG_ERROR("Receiving : %d\n", heatsim->rank);
     
-    ret = MPI_Waitall(1, request, status);
-    if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Error Wait receive struct : ", ret);
-        goto fail_exit;
-    }
+    
+    // ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+    // LOG_ERROR("Received width: %d, height: %d, padding: %d for rank: %d", buf.width, buf.height, buf.padding, heatsim->rank);
 
-    grid_t* newGrid = grid_create(buf.width, buf.height, buf.padding);
+    // if(ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Error Wait receive struct : ", ret);
+    //     goto fail_exit;
+    // }
 
-    ret = MPI_Irecv(newGrid->data, buf.width * buf.height, MPI_DOUBLE, 0, heatsim->rank * 2 + 1, heatsim->communicator, &request[1]);
-    if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Error receive data : ", ret);
-        goto fail_exit;
-    }
-    LOG_ERROR("waiting in second receive : %d\n", heatsim->rank);
-    ret = MPI_Waitall(1, request + 1, status);
-    if(ret != MPI_SUCCESS) {
-        LOG_ERROR_MPI("Error Wait receive data : ", ret);
-        goto fail_exit;
-    }
-    LOG_ERROR("receive complete : %d\n", heatsim->rank);
+    MPI_Request request;
+    printf("[Process %d] I issue the MPI_Irecv to receive the message as a background task.\n", heatsim->rank);
+    MPI_Irecv(&buff, 1, MPI_INT, 0, 6, heatsim->communicator, &request);
+
+    // Do other things while the MPI_Irecv completes.
+    printf("[Process %d] The MPI_Irecv is issued, I now moved on to print this message.\n", heatsim->rank);
+
+    // Wait for the MPI_Recv to complete.
+    MPI_Wait(&request, MPI_STATUS_IGNORE);
+    printf("[Process %d] The MPI_Irecv completed, therefore so does the underlying MPI_Recv. I received the value %d.\n", heatsim->rank, buff);
+    grid_t* newGrid = grid_create(buf.width,buf.height,buf.padding);
+    
+    // ret = MPI_Irecv(newGrid->data, buf.width * buf.height, MPI_DOUBLE, 0, heatsim->rank * 2 + 1, heatsim->communicator, &request[1]);
+    // if(ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Error receive data : ", ret);
+    //     goto fail_exit;
+    // }
+    // LOG_ERROR("waiting in second receive : %d\n", heatsim->rank);
+    // ret = MPI_Waitall(1, request + 1, status);
+    // if(ret != MPI_SUCCESS) {
+    //     LOG_ERROR_MPI("Error Wait receive data : ", ret);
+    //     goto fail_exit;
+    // }
+    //LOG_ERROR("receive complete : %d\n", heatsim->rank);
 
     // if(ret != MPI_SUCCESS) {
     //     goto fail_exit;
     
     // }
-    free(request);
-    free(status);
+    // free(request);
+    // free(status);
 
     
     return newGrid;
@@ -338,6 +336,7 @@ int heatsim_exchange_borders(heatsim_t* heatsim, grid_t* grid) {
      *
      *       Utilisez `grid_get_cell` pour obtenir un pointeur vers une cellule.
      */
+    return 0;
 
 fail_exit:
     return -1;
