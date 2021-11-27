@@ -114,45 +114,6 @@ int heatsim_run(char* input, char* output, unsigned int dim_x, unsigned int dim_
     heatsim_t heatsim;
     cart2d_t* cart = NULL;
 
-
-////////////////////
-    // int size;
-    // MPI_Comm_size(MPI_COMM_WORLD, &size);
-    // enum role_ranks { SENDER, RECEIVER };
-    // int my_rank;
-    // MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
-    // if (my_rank == 0) {
-    //     int buffer_sent[3] = { 111111, 222222, 333333 };
-    //     MPI_Request request[3];
-    //     for (unsigned int i = 0; i < 3; i++) {
-    //         printf("MPI process %d sends value %d.\n", my_rank, buffer_sent[i]);
-    //         MPI_Isend(&buffer_sent[i], 1, MPI_INT, i + 1, 0, MPI_COMM_WORLD, &request[i]);
-
-    //         // Do other things while the MPI_Isend completes
-    //         // <...>
-
-    //         // Let's wait for the MPI_Isend to complete before progressing further.
-    //         MPI_Wait(&request[i], MPI_STATUS_IGNORE);
-    //     }
-        
-    // } else {
-        // int received;
-        // MPI_Request request;
-        // printf("[Process %d] I issue the MPI_Irecv to receive the message as a background task.\n", my_rank);
-        // MPI_Irecv(&received, 1, MPI_INT, SENDER, 0, MPI_COMM_WORLD, &request);
-
-        // // Do other things while the MPI_Irecv completes.
-        // printf("[Process %d] The MPI_Irecv is issued, I now moved on to print this message.\n", my_rank);
-
-        // // Wait for the MPI_Recv to complete.
-        // MPI_Wait(&request, MPI_STATUS_IGNORE);
-        // printf("[Process %d] The MPI_Irecv completed, therefore so does the underlying MPI_Recv. I received the value %d.\n", my_rank, received);
-    // }
-    
-
-    // return 0;
-/////////////////////////////////
     if (heatsim_init(&heatsim, dim_x, dim_y) < 0) {
 
         LOG_ERROR("simulation initialization failed");
