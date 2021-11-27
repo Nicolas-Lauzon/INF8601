@@ -162,7 +162,7 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
 
         LOG_ERROR("Sending to rank: %d", i + 1);
 
-        ret = MPI_Isend(&buf, 1, MPI_INT, i + 1, 6, heatsim->communicator, &request[i]);
+        ret = MPI_Isend(&dim_to_send, 1, ElementType, i + 1, 6, heatsim->communicator, &request[i]);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send struct : ", ret);
             goto fail_exit;
@@ -253,14 +253,14 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     MPI_Request request;
     printf("[Process %d] I issue the MPI_Irecv to receive the message as a background task.\n", heatsim->rank);
-    MPI_Irecv(&buff, 1, MPI_INT, 0, 6, heatsim->communicator, &request);
+    MPI_Irecv(&buf, 1, ElementType, 0, 6, heatsim->communicator, &request);
 
     // Do other things while the MPI_Irecv completes.
     printf("[Process %d] The MPI_Irecv is issued, I now moved on to print this message.\n", heatsim->rank);
 
     // Wait for the MPI_Recv to complete.
     MPI_Wait(&request, MPI_STATUS_IGNORE);
-    printf("[Process %d] The MPI_Irecv completed, therefore so does the underlying MPI_Recv. I received the value %d.\n", heatsim->rank, buff);
+    printf("[Process %d] The MPI_Irecv completed, therefore so does the underlying MPI_Recv. I received the value %d.\n", heatsim->rank, buf.width);
     grid_t* newGrid = grid_create(buf.width,buf.height,buf.padding);
     
     // ret = MPI_Irecv(newGrid->data, buf.width * buf.height, MPI_DOUBLE, 0, heatsim->rank * 2 + 1, heatsim->communicator, &request[1]);
