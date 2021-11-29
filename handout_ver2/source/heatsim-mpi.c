@@ -4,6 +4,8 @@
 #include "heatsim.h"
 #include "log.h"
 
+#define MAX_DATA_SIZE 1000000
+
 int heatsim_init(heatsim_t* heatsim, unsigned int dim_x, unsigned int dim_y) {
     /*
      * TODO: Initialiser tous les membres de la structure `heatsim`. 
@@ -44,20 +46,6 @@ int heatsim_init(heatsim_t* heatsim, unsigned int dim_x, unsigned int dim_y) {
         goto fail_exit;
     }
 
-    // ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank, &heatsim->rank_east_peer);
-    //  if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Shift 3 : ", ret);
-
-    //     goto fail_exit;
-    // }
-
-    // ret = MPI_Cart_shift(heatsim->communicator, 0, -1, &heatsim->rank, &heatsim->rank_west_peer);
-    //  if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Shift 4 : ", ret);
-
-    //     goto fail_exit;
-    // }
-
     ret = MPI_Cart_coords(heatsim->communicator, heatsim->rank, 2, heatsim->coordinates);
      if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error : ", ret);
@@ -78,7 +66,8 @@ typedef struct dimensions {
 } dim_t;
 
 typedef struct data {
-    double* data;
+    int num;
+    double data[MAX_DATA_SIZE];
 } data_t;
 
 
@@ -106,22 +95,24 @@ MPI_Datatype grid_size_struct() {
     return type;
 }
 
-MPI_Datatype grid_data_struct(unsigned int size) {
+MPI_Datatype grid_data_struct() {
     MPI_Datatype type;
 
-    MPI_Datatype field_types[1] =
+    MPI_Datatype field_types[2] =
     { 
+        MPI_INT,
         MPI_DOUBLE
     };
 
-    MPI_Aint field_positions[1] =
+    MPI_Aint field_positions[2] =
     { 
+        offsetof(data_t, num),
         offsetof(data_t, data)
     };
 
-    int field_lengths[1] = { size };
+    int field_lengths[2] = { 1, MAX_DATA_SIZE };
 
-    MPI_Type_create_struct(1, field_lengths, field_positions, field_types, &type);
+    MPI_Type_create_struct(2, field_lengths, field_positions, field_types, &type);
     
     return type;
 }
@@ -174,12 +165,14 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             goto fail_exit;
         }
 
-        MPI_Datatype data_type = grid_data_struct(grid->width * grid->height);
+        MPI_Datatype data_type = grid_data_struct();
         MPI_Type_commit(&data_type);
 
         data_t data;
-        data.data = malloc(grid->width * grid->height * sizeof(double));
-        data.data = grid->data;
+        data.num = 12345;
+        //memcpy(data.data, grid->data, grid->width * grid->height * sizeof(double));
+        //data.data = malloc(grid->width * grid->height * sizeof(double));
+        //data.data = grid->data;
         
         // NOTE: Pas de & car grid->data est deja un pointeur
         ret = MPI_Isend(&data, 1, data_type, i + 1, 6, heatsim->communicator, &request[i]);
@@ -232,11 +225,11 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     grid_t* newGrid = grid_create(buf.width, buf.height, buf.padding);
     
-    MPI_Datatype data_type = grid_data_struct(buf.width * buf.height);
+    MPI_Datatype data_type = grid_data_struct();
     MPI_Type_commit(&data_type);
 
     data_t data;
-    data.data = malloc(buf.width * buf.height * sizeof(double));
+    //data.data = malloc(buf.width * buf.height * sizeof(double));
 
     // NOTE: Pas de & car data est deja un pointeur
     ret = MPI_Irecv(&data, 1, data_type, 0, 6, heatsim->communicator, &request);
@@ -253,6 +246,8 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     #warning Changer data directement ??
     //LOG_ERROR("In data %f", data.data[0]);
+
+    LOG_ERROR("DATA NUM %d", data.num);
 
     for (unsigned int i = 0; i < buf.width * buf.height; i++) {
         //newGrid->data[i] = data.data[i];

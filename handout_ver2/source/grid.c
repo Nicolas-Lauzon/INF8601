@@ -113,7 +113,6 @@ int grid_copy_data(grid_t* src, grid_t* dst) {
     if (grid_assert_equal_dimensions(src, dst) < 0) {
         goto fail_exit;
     }
-        LOG_ERROR("NOT EQUAL SIZE");
 
     for (int j = 0; j < src->height; j++) {
         for (int i = 0; i < src->width; i++) {
