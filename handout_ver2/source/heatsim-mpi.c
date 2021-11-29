@@ -4,6 +4,12 @@
 #include "heatsim.h"
 #include "log.h"
 
+/*
+    QUESTIONS
+    changer grid data directement
+    envoyer double* dans struct
+*/
+
 #define MAX_DATA_SIZE 1000000
 
 int heatsim_init(heatsim_t* heatsim, unsigned int dim_x, unsigned int dim_y) {
@@ -32,20 +38,20 @@ int heatsim_init(heatsim_t* heatsim, unsigned int dim_x, unsigned int dim_y) {
     MPI_Comm_size(heatsim->communicator, &heatsim->rank_count);
     MPI_Comm_rank(heatsim->communicator, &heatsim->rank);     
 
-    ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank_north_peer, &heatsim->rank_south_peer);
+    ret = MPI_Cart_shift(heatsim->communicator, 1, 1, &heatsim->rank_north_peer, &heatsim->rank_south_peer);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Shift 1 : ", ret);
 
         goto fail_exit;
     }
 
-    ret = MPI_Cart_shift(heatsim->communicator, 1, 1, &heatsim->rank_west_peer, &heatsim->rank_east_peer);
+    ret = MPI_Cart_shift(heatsim->communicator, 0, 1, &heatsim->rank_west_peer, &heatsim->rank_east_peer);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Shift 2 : ", ret);
 
         goto fail_exit;
     }
-
+    
     ret = MPI_Cart_coords(heatsim->communicator, heatsim->rank, 2, heatsim->coordinates);
      if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error : ", ret);
@@ -67,7 +73,7 @@ typedef struct dimensions {
 
 typedef struct data {
     int num;
-    double data[MAX_DATA_SIZE];
+    double data[];
 } data_t;
 
 
@@ -139,11 +145,11 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
     int ret = 0;
 
     for (int i = 0; i < heatsim->rank_count - 1; i++) {
-        ret = MPI_Cart_coords(heatsim->communicator, i, 2, heatsim->coordinates);
-        if(ret != MPI_SUCCESS) {
-            LOG_ERROR_MPI("Error in cart coords : ", ret);
-            goto fail_exit;
-        }
+        // ret = MPI_Cart_coords(heatsim->communicator, i, 2, heatsim->coordinates);
+        // if(ret != MPI_SUCCESS) {
+        //     LOG_ERROR_MPI("Error in cart coords : ", ret);
+        //     goto fail_exit;
+        // }
         grid_t* grid = cart2d_get_grid(cart, heatsim->coordinates[0], heatsim->coordinates[1]);
 
         struct dimensions dim_to_send = {
@@ -175,7 +181,8 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
         //data.data = grid->data;
         
         // NOTE: Pas de & car grid->data est deja un pointeur
-        ret = MPI_Isend(&data, 1, data_type, i + 1, 6, heatsim->communicator, &request[i]);
+
+        ret = MPI_Isend(grid->data, grid->width * grid->height, MPI_DOUBLE, i + 1, 6, heatsim->communicator, &request[i]);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send data : ", ret);
             goto fail_exit;
@@ -228,11 +235,9 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
     MPI_Datatype data_type = grid_data_struct();
     MPI_Type_commit(&data_type);
 
-    data_t data;
-    //data.data = malloc(buf.width * buf.height * sizeof(double));
-
     // NOTE: Pas de & car data est deja un pointeur
-    ret = MPI_Irecv(&data, 1, data_type, 0, 6, heatsim->communicator, &request);
+    double* data = malloc(newGrid->width * newGrid->height * sizeof(double));
+    ret = MPI_Irecv(data, newGrid->width * newGrid->height, MPI_DOUBLE, 0, 6, heatsim->communicator, &request);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error receive data : ", ret);
         goto fail_exit;
@@ -246,12 +251,8 @@ grid_t* heatsim_receive_grid(heatsim_t* heatsim) {
 
     #warning Changer data directement ??
     //LOG_ERROR("In data %f", data.data[0]);
+    newGrid->data = data;
 
-    LOG_ERROR("DATA NUM %d", data.num);
-
-    for (unsigned int i = 0; i < buf.width * buf.height; i++) {
-        //newGrid->data[i] = data.data[i];
-    }
     
     LOG_ERROR("Received for rank: %d\n", heatsim->rank);
 
@@ -307,67 +308,119 @@ int heatsim_exchange_borders(heatsim_t* heatsim, grid_t* grid) {
      *
      *       Utilisez `grid_get_cell` pour obtenir un pointeur vers une cellule.
      */
-    // MPI_Request request[4];
-    // MPI_Status status[2];
-    // int ret = 0;
-    // int width = grid->width;
-    // int height = grid->height;
-    //     LOG_ERROR("DFDFDSFDSFDS");
+    MPI_Request request[8];
+    MPI_Status status[8];
+    int ret = 0;
+    int width = grid->width;
+    int height = grid->height;
 
-    // /// SEND NORTH BORDER
-    // double* north_border = malloc(width * sizeof(double));
-    // for (unsigned int i = 0; i < width; i++) {
-    //     north_border[i] = *grid_get_cell(grid, i, 1);
-    // }
+    MPI_Datatype type;
+    MPI_Type_vector(height, 1, 1, MPI_DOUBLE, &type);
+    MPI_Type_commit(&type);
 
-    // for (unsigned int i = 0; i < width; i++) {
-    //     LOG_ERROR("Data at %d is %f", i, north_border[i]);
-    // }
+    // RECEIVE EAST BORDER
+    double* new_east_border = malloc(height * sizeof(double));
+    ret = MPI_Irecv(new_east_border, height, type, heatsim->rank_east_peer, 6, heatsim->communicator, &request[0]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error receive west : ", ret);
+        goto fail_exit;
+    }
 
-    // ret = MPI_Isend(north_border, width, MPI_DOUBLE, heatsim->rank_north_peer, 6, heatsim->communicator, &request[0]);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error send north border : ", ret);
-    //     goto fail_exit;
-    // }
-
-    // // RECEIVE SOUTH BORDER
-    // double* new_south_border = malloc(width * sizeof(double));
-    // ret = MPI_Irecv(new_south_border, width, MPI_DOUBLE, heatsim->rank_south_peer, 6, heatsim->communicator, &request[1]);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error receive south : ", ret);
-    //     goto fail_exit;
-    // }
-
-    // ret = MPI_Waitall(2, request, status);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error wait border : ", ret);
-    //     printf("MPI process %d from rank %d, with tag %d and error code %d.\n", 
-    //         heatsim->rank,
-    //         status->MPI_SOURCE,
-    //         status->MPI_TAG,
-    //         status->MPI_ERROR);
-    //     goto fail_exit;
-    // }
-
-    /// SEND SOUTH BORDER
-    // double* south_border = malloc(width * sizeof(double));
-    // for (unsigned int i = 0; i < width; i++) {
-    //     south_border[i] = *grid_get_cell(grid, i, height);
-    // }
-
-    // ret = MPI_Isend(south_border, width, MPI_DOUBLE, heatsim->rank_south_peer, 6, heatsim->communicator, &request[1]);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error send south border : ", ret);
-    //     goto fail_exit;
-    // }
+    // RECEIVE SOUTH BORDER
+    double* new_south_border = malloc(width * sizeof(double));
+    ret = MPI_Irecv(new_south_border, width, MPI_DOUBLE, heatsim->rank_south_peer, 6, heatsim->communicator, &request[1]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error receive south : ", ret);
+        goto fail_exit;
+    }
 
     // RECEIVE NORTH BORDER
-    // double* new_north_border = malloc(width * sizeof(double));
-    // ret = MPI_Irecv(new_north_border, width, MPI_DOUBLE, heatsim->rank_north_peer, 6, heatsim->communicator, &request[2]);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error receive north : ", ret);
-    //     goto fail_exit;
-    // }
+    double* new_north_border = malloc(width * sizeof(double));
+    ret = MPI_Irecv(new_north_border, width, MPI_DOUBLE, heatsim->rank_north_peer, 6, heatsim->communicator, &request[2]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error receive north : ", ret);
+        goto fail_exit;
+    }
+
+    // RECEIVE WEST BORDER
+    double* new_west_border = malloc(height * sizeof(double));
+    ret = MPI_Irecv(new_west_border, height, type, heatsim->rank_west_peer, 6, heatsim->communicator, &request[3]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error receive west : ", ret);
+        goto fail_exit;
+    }
+
+    // SEND NORTH BORDER
+    double* north_border = malloc(width * sizeof(double));
+    for (unsigned int i = 0; i < width; i++) {
+        north_border[i] = *grid_get_cell(grid, i, 1);
+    }
+
+    ret = MPI_Isend(north_border, width, MPI_DOUBLE, heatsim->rank_north_peer, 6, heatsim->communicator, &request[4]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error send north border : ", ret);
+        goto fail_exit;
+    }
+
+
+    // SEND SOUTH BORDER
+    double* south_border = malloc(width * sizeof(double));
+    for (unsigned int i = 0; i < width; i++) {
+        south_border[i] = *grid_get_cell(grid, i, height - 1);
+    }
+
+    ret = MPI_Isend(south_border, width, MPI_DOUBLE, heatsim->rank_south_peer, 6, heatsim->communicator, &request[5]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error send south border : ", ret);
+        goto fail_exit;
+    }
+
+    // SEND EAST BORDER
+    double* east_border = malloc(height * sizeof(double));
+    for (unsigned int i = 0; i < height; i++) {
+        east_border[i] = *grid_get_cell(grid, 1, i);
+    }
+    ret = MPI_Isend(east_border, 1, type, heatsim->rank_east_peer, 6, heatsim->communicator, &request[6]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error send east border : ", ret);
+        goto fail_exit;
+    }
+
+    //SEND WEST BORDER
+    double* west_border = malloc(height * sizeof(double));
+    for (unsigned int i = 0; i < height; i++) {
+        west_border[i] = *grid_get_cell(grid, width - 1, i);
+    }
+    ret = MPI_Isend(west_border, 1, type, heatsim->rank_west_peer, 6, heatsim->communicator, &request[7]);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error send east border : ", ret);
+        goto fail_exit;
+    }
+
+    ret = MPI_Waitall(8, request, status);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error wait border : ", ret);
+        printf("MPI process %d from rank %d, with tag %d and error code %d.\n", 
+            heatsim->rank,
+            status->MPI_SOURCE,
+            status->MPI_TAG,
+            status->MPI_ERROR);
+        goto fail_exit;
+    }
+
+    // COPY NORTH AND SOUTH
+    for (unsigned int i = 1; i < width - 1; i++) {
+        *grid_get_cell(grid, i, 1) = new_north_border[i];
+        *grid_get_cell(grid, i, height - 1) = new_south_border[i];
+    }
+
+    // COPY NORTH AND SOUTH
+    for (unsigned int i = 1; i < height - 1; i++) {
+        *grid_get_cell(grid, 1, i) = new_west_border[i];
+        *grid_get_cell(grid, width - 1, i) = new_east_border[i];
+    }
+    
+    LOG_ERROR("RECEIVED BORDERS\n");
 
     return 0;
 
