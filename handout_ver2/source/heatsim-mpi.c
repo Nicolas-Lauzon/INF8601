@@ -391,24 +391,24 @@ int heatsim_send_result(heatsim_t* heatsim, grid_t* grid) {
      * TODO: Envoyer les données (`data`) du `grid` résultant au rang 0. Le
      *       `grid` n'a aucun rembourage (padding = 0);
      */
-    // int ret = 0;
-    // MPI_Request requests;
-    // MPI_Status status;
+    int ret = 0;
+    MPI_Request requests;
+    MPI_Status status;
 
-    // LOG_ERROR("Sending result to rank 0 from rank %d", heatsim->rank);
+    LOG_ERROR("Sending result to rank 0 from rank %d", heatsim->rank);
 
-    // ret = MPI_Isend(grid->data, grid->width * grid->height, MPI_DOUBLE, 0, 1, heatsim->communicator, &requests);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error sending data to node 0 : ", ret);
-    //     goto fail_exit;
-    // }
+    ret = MPI_Isend(grid->data, grid->width * grid->height, MPI_DOUBLE, 0, 1, heatsim->communicator, &requests);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error sending data to node 0 : ", ret);
+        goto fail_exit;
+    }
 
-    // // We could use a simple MPI_Wait
-    // ret = MPI_Wait(&requests, MPI_STATUS_IGNORE);
-    // if(ret != MPI_SUCCESS) {
-    //     LOG_ERROR_MPI("Error wait results : ", ret);
-    //     goto fail_exit;
-    // }
+    // We could use a simple MPI_Wait
+    ret = MPI_Wait(&requests, MPI_STATUS_IGNORE);
+    if(ret != MPI_SUCCESS) {
+        LOG_ERROR_MPI("Error wait results : ", ret);
+        goto fail_exit;
+    }
     return 0;
 
 fail_exit:
@@ -423,33 +423,34 @@ int heatsim_receive_results(heatsim_t* heatsim, cart2d_t* cart) {
      *       Utilisez `cart2d_get_grid` pour obtenir la `grid` à une coordonnée
      *       qui va recevoir le contenue (`data`) d'un autre noeud.
      */
-    // int ret = 0;
-    // MPI_Request request;
+    int ret = 0;
+    MPI_Request request;
 
-    // for (unsigned int i = 0; i < heatsim->rank_count; i++) {
-    //     LOG_ERROR("Rank 0 receiving results from %d", i + 1);
+    int coords[2];
 
-    //     grid_t* grid = cart2d_get_grid(cart, heatsim->coordinates[0], heatsim->coordinates[1]);
+    for (unsigned int i = 1; i < heatsim->rank_count; i++) {
+        LOG_ERROR("Rank 0 receiving results from %d", i + 1);
 
-    //     double* data = malloc(grid->width * grid->height * sizeof(double));
-    //     ret = MPI_Irecv(data, grid->width * grid->height, MPI_DOUBLE, i + 1, 1, heatsim->communicator, &request);
-    //     if(ret != MPI_SUCCESS) {
-    //         LOG_ERROR("Error receive data from %d", heatsim->rank);
-    //         goto fail_exit;
-    //     }
-    //     ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
-    //     if(ret != MPI_SUCCESS) {
-    //         LOG_ERROR_MPI("Error wait border : ", ret);
-    //         LOG_ERROR("My rank  :  %d\n", heatsim->rank);
-    //         LOG_ERROR("My North  :  %d\n", heatsim->rank_north_peer);
-    //         LOG_ERROR("My South  :  %d\n", heatsim->rank_south_peer);
-    //         LOG_ERROR("My East  :  %d\n", heatsim->rank_east_peer);
-    //         LOG_ERROR("My West  :  %d\n", heatsim->rank_west_peer);
-    //         goto fail_exit;
-    //     }
+        ret = MPI_Cart_coords(heatsim->communicator, i, 2, coords);
+        if (ret != MPI_SUCCESS) {
+            LOG_ERROR_MPI("Error getting coords : ", ret);
+            goto fail_exit;
+        }
 
-    //     grid->data = data;
-    // }
+        grid_t* grid = cart2d_get_grid(cart, coords[0], coords[1]);
+
+        ret = MPI_Irecv(grid->data, grid->width * grid->height, MPI_DOUBLE, i, 1, heatsim->communicator, &request);
+        if(ret != MPI_SUCCESS) {
+            LOG_ERROR("Error receive data from %d", heatsim->rank);
+            goto fail_exit;
+        }
+        ret = MPI_Wait(&request, MPI_STATUS_IGNORE);
+        if(ret != MPI_SUCCESS) {
+            LOG_ERROR("Error waiting for data from node %d", i);
+            goto fail_exit;
+        }
+
+    }
 
     return 0;
 
