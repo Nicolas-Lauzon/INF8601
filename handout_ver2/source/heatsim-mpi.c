@@ -74,8 +74,7 @@ typedef struct dimensions {
 } dim_t;
 
 typedef struct data {
-    int num;
-    double data[];
+    double* data;
 } data_t;
 
 
@@ -171,15 +170,9 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
         MPI_Datatype data_type = grid_data_struct(grid->width * grid->height);
         MPI_Type_commit(&data_type);
 
-        data_t data;
-        data.num = 12345;
-        //memcpy(data.data, grid->data, grid->width * grid->height * sizeof(double));
-        //data.data = malloc(grid->width * grid->height * sizeof(double));
-        //data.data = grid->data;
         
         // NOTE: Pas de & car grid->data est deja un pointeur
-
-        ret = MPI_Isend(grid->data, grid->width_padded * grid->height_padded, MPI_DOUBLE, i, 7, heatsim->communicator, &request);
+        ret = MPI_Isend(grid->data, 1, data_type, i, 7, heatsim->communicator, &request);
         if(ret != MPI_SUCCESS) {
             LOG_ERROR_MPI("Error send data : ", ret);
             goto fail_exit;
@@ -191,7 +184,6 @@ int heatsim_send_grids(heatsim_t* heatsim, cart2d_t* cart) {
             goto fail_exit;
         }
     }
-    //LOG_ERROR("Rank %d done sending data", heatsim->rank);
 
     return 0;
 
@@ -296,7 +288,8 @@ int heatsim_exchange_borders(heatsim_t* heatsim, grid_t* grid) {
      *
      *       Utilisez `grid_get_cell` pour obtenir un pointeur vers une cellule.
      */
-    MPI_Request request[16];
+
+    MPI_Request request[8];
     MPI_Status status[8];
     int ret = 0;
     int width = grid->width;
@@ -393,7 +386,6 @@ int heatsim_send_result(heatsim_t* heatsim, grid_t* grid) {
      */
     int ret = 0;
     MPI_Request requests;
-    MPI_Status status;
 
     LOG_ERROR("Sending result to rank 0 from rank %d", heatsim->rank);
 
@@ -403,7 +395,6 @@ int heatsim_send_result(heatsim_t* heatsim, grid_t* grid) {
         goto fail_exit;
     }
 
-    // We could use a simple MPI_Wait
     ret = MPI_Wait(&requests, MPI_STATUS_IGNORE);
     if(ret != MPI_SUCCESS) {
         LOG_ERROR_MPI("Error wait results : ", ret);
