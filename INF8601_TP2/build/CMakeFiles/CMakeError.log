@@ -1,0 +1,180 @@
+Determining if the CL_VERSION_2_2 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_d19b9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d19b9.dir/build.make CMakeFiles/cmTC_d19b9.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d19b9.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_d19b9.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_d19b9.dir/build.make:85: CMakeFiles/cmTC_d19b9.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_d19b9/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_2_2
+  return ((int*)(&CL_VERSION_2_2))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CL_VERSION_2_1 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_ee1bb/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ee1bb.dir/build.make CMakeFiles/cmTC_ee1bb.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ee1bb.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_ee1bb.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_ee1bb.dir/build.make:85: CMakeFiles/cmTC_ee1bb.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_ee1bb/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_2_1
+  return ((int*)(&CL_VERSION_2_1))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CL_VERSION_2_0 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_25bec/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_25bec.dir/build.make CMakeFiles/cmTC_25bec.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_25bec.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_25bec.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_25bec.dir/build.make:85: CMakeFiles/cmTC_25bec.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_25bec/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_2_0
+  return ((int*)(&CL_VERSION_2_0))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CL_VERSION_1_2 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_1f50a/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_1f50a.dir/build.make CMakeFiles/cmTC_1f50a.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1f50a.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_1f50a.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_1f50a.dir/build.make:85: CMakeFiles/cmTC_1f50a.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_1f50a/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_1_2
+  return ((int*)(&CL_VERSION_1_2))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CL_VERSION_1_1 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_d73ce/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d73ce.dir/build.make CMakeFiles/cmTC_d73ce.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d73ce.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_d73ce.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_d73ce.dir/build.make:85: CMakeFiles/cmTC_d73ce.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_d73ce/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_1_1
+  return ((int*)(&CL_VERSION_1_1))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CL_VERSION_1_0 exist failed with the following output:
+Change Dir: /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake cmTC_cf87c/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cf87c.dir/build.make CMakeFiles/cmTC_cf87c.dir/build
+gmake[1]: Entering directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cf87c.dir/CheckSymbolExists.c.o
+/usr/bin/cc   -g -Wall  -o CMakeFiles/cmTC_cf87c.dir/CheckSymbolExists.c.o -c /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:2:10: fatal error: OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h: No such file or directory
+    2 | #include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_cf87c.dir/build.make:85: CMakeFiles/cmTC_cf87c.dir/CheckSymbolExists.c.o] Error 1
+gmake[1]: Leaving directory '/home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:140: cmTC_cf87c/fast] Error 2
+
+
+File /home/william/INF8601/INF8601_TP2/build/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <OpenCL_INCLUDE_DIR-NOTFOUND/CL/cl.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CL_VERSION_1_0
+  return ((int*)(&CL_VERSION_1_0))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
