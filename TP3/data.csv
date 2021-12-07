@@ -1,3 +1,4 @@
+job-id  node-count      cpu-count       dim-x   dim-y   iterations      image   time
 2160    1       1       1       1       1       earth-small.png 0.880
 2161    2       16      4       4       1       earth-small.png 1.410
 2160    1       1       1       1       1       earth-medium.png        2.590
